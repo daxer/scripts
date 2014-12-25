@@ -1,0 +1,16 @@
+#!/bin/sh
+cd /watch_dir/
+cook="cookies.txt"
+res="res.html"
+wget --keep-session-cookies --save-cookies $cook --post-data 'login_username=??????&login_password=????????&login=%C2%F5%EE%E4'  http://login.rutracker.org/forum/login.php -qO $res
+
+mysql -h127.0.0.1 -u "root" -p"??????????"  torrents -e "SELECT tor_num FROM torrents" | grep -v tor_num | \
+while read i; 
+do
+    file="$i.torrent"; 
+    ref="http://rutracker.org/forum/viewtopic.php?t=$i";
+    url="http://dl.rutracker.org/forum/dl.php?t=$i"; 
+    curl -s -d "" --cookie "$cook" -c "$cook" -e "$ref" -o "$file" $url; 
+done
+rm $cook $res
+mv *.torrent /watch_dir/

@@ -1,0 +1,27 @@
+#!/bin/bash
+home="/watch_dir"
+cd $home/lost/
+
+# Подготовка заголовка If-Modified-Since
+lastmod="$( grep -m 1 Last-Modified lost.out )"
+
+# Создаем header
+header="If-Modified-Since:"${lastmod#*:}
+
+# Фильтр сериалов
+movies='Castle|Grimm|Elementary|Dracula|Tomorrow'
+
+# Фильтр качества
+quality='\.720p\.rus\.|\.HD\.'
+
+wget -vS -O - --header="$header" http://www.lostfilm.tv/rssdd.xml -o lost.out | grep -ioe "http.*torrent" | egrep -i "$movies" | egrep "$quality" | \
+while read link;
+do
+  link="${link/&amp;/&}"
+  name="${link#*&}"
+# скачанные файлы хранятся в /watch_dir/lost, для истории
+  if [ ! -e $name ]; then
+        wget -q --header "Cookie: uid=?????; pass=????????????????????????; usess=???????????????????????????????" $link -O "$name"
+        cp $name $home
+  fi
+done

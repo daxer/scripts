@@ -1,0 +1,16 @@
+#!/bin/bash
+path="/run/shm/torrent_watch"
+cookies=`mktemp $path/cookies.XXXX`
+
+wget --keep-session-cookies --save-cookies "$cookies" --post-data 'login_username=??????&login_password=????????&login=%C2%F5%EE%E4' http://login.rutracker.org/forum/login.php -qO - > /dev/null
+
+wget --load-cookies $cookies --keep-session-cookies "http://rutracker.org/forum/search.php?dlu=?????????&dlw=1" -qO - | grep -ioe 'viewtopic\.php.t\=[0-9]*..class\=.topictitle' | grep -ioe '[0-9]*' | \
+while read i;
+do
+    ref="http://rutracker.org/forum/viewtopic.php?t=$i"
+    file="$path/$i.torrent"
+    url="http://dl.rutracker.org/forum/dl.php?t=$i"
+    curl -s -d "" --cookie "$cookies" -c "$cookies" -e "$ref" -o "$file" $url
+#    mysql -h127.0.0.1 -u "root" -p"password"  torrents -e "INSERT INTO torrents (tor_num, tor_fresh) VALUES ($i, 1)" 2>/dev/null
+done
+rm $cookies

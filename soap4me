@@ -1,0 +1,16 @@
+#!/bin/bash
+
+rss="http://soap4.me/rss/my/hd/?????????????????????????????"
+home="/watch_dir"
+
+cd $home/soap4me/
+
+wget -qO - $rss |grep link | grep -ioe "http.*torrent" | \
+while read link;
+do
+    name="${link##*/}"
+    if [ ! -e $name ]; then
+        wget -q $link
+        cp "$name" "$home"
+    fi
+done

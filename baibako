@@ -1,0 +1,27 @@
+#!/bin/bash
+
+username="????"
+password="????"
+watch_dir="/watch_dir/"
+res=`mktemp /tmp/res.html.XXXX`
+cook=`mktemp /tmp/cookies.XXXX`
+rss="http://baibako.tv/rss2.php?feed=dl"
+
+# Фильтр сериалов
+movies='Bones|Mentalist|Blabla'
+# Фильтр качества
+quality='\.HD720p\.'
+
+wget --keep-session-cookies --save-cookies $cook --post-data "username=$username&password=$password" http://baibako.tv/takelogin.php -qO $res
+
+wget -qO - --keep-session-cookies --load-cookies $cook $rss | grep -ioe "http.*torrent" | egrep -i "$movies" | egrep "$quality" | \
+while read link;
+do
+  link="${link/&amp;/&}"
+  name="${link#*&name=}"
+  if [ ! -e $name ]
+    then
+        wget --keep-session-cookies --load-cookies $cook $link -qO "$watch_dir$name"
+  fi
+done
+rm $res $cook

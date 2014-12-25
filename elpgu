@@ -1,0 +1,52 @@
+#!/bin/sh
+account="?????-???-??"
+counter="???????????"
+login="?????????%40mail.com"
+password="?????????????"
+pgu_link="https://pgu.mos.ru/ru/application/mosenergo/counters/"
+
+################################
+
+usage() {
+    cat >&2 << EOF
+
+Usage:
+   $0 - get counter values
+   $0 [[[Tariff1] Tariff2] Tariff3] - set values according to you tariff
+EOF
+}
+setValue() {
+	curl -c $cjar -b $cjar -s -d "$value$nm_abn" $pgu_link?getAction=sendData
+}
+
+#################################
+
+cjar=`mktemp /tmp/elpgu-cookies.XXXX`
+resp=`mktemp /tmp/elpgu-json.XXXX`
+# get cookies
+curl -c $cjar -s https://login.mos.ru/eaidit/eaiditweb/openouterlogin.do > /dev/null
+# post login data
+if ! curl -c $cjar -b $cjar -s -L -d "username=$login&password=$password" https://login.mos.ru/eaidit/eaiditweb/outerlogin.do | grep -q "Your login was successful"; then
+	echo "Login failed!" >&2
+	exit 1
+fi
+
+res=$( curl -c $cjar -b $cjar -s -d "getAction=auth&ls=$account&pu=$counter" $pgu_link | sed -r 's/^.*currentCounts...//;s/\"|\}|...\(//g;s/,/\&/g;s/:/=/g;s/\)\&/\n/g' )
+while s in $res
+do 
+j=`expr $j + 1`
+echo "$s" "$j"
+#eval $( echo $res | sed -r 's/(^.*)(nm_abn.*$)/T="\1"; nm_abn="\2";/' )
+done
+
+if [ "$#" -gt 1 ]; then
+	for arg in "$@"
+	do
+		i=`expr $i + 1`
+		value="${value}t$i=$arg&"
+		echo $value
+	done
+#	setValue
+fi
+
+rm $cjar $resp

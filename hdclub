@@ -1,0 +1,12 @@
+#!/bin/sh
+cd /watch_dir
+mysql -h127.0.0.1 -u "root" -p"password"  hdclub -e "SELECT tor_num FROM torrents" | grep -v tor_num | \
+while read i;
+do
+    file="$i.torrent"
+    if [ ! -e $file ]; then
+        wget  -qO $file "http://hdclub.org/download.php?id=$i&passkey=??????????????????"
+	mv $file /watch_dir/
+    fi
+done
+

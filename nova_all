@@ -1,0 +1,18 @@
+#!/bin/bash
+HEADER="Cookie:nftv=????????????????????????????????"
+rss="http://novafilm.tv/do/browse/"
+home="/watch_dir"
+cd $home/novafilm
+
+wget -qO - --no-cookies --header "$HEADER" "$rss" | grep -ioe "\/torrent\/.*\.html" | grep -ioe "[0-9]*" | \
+while read tor;
+do
+    name="$tor.torrent"
+    link="http://novafilm.tv/download/$tor/$tor.torrent"
+  if [ ! -e $name ]
+    then
+        wget -q --header "$HEADER" $link -O "$name"
+        cp "$name" "$home"
+  fi
+done
+

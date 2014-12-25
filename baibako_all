@@ -1,0 +1,16 @@
+#!/bin/bash
+HEADER="Cookie: PHPSESSID=??????????; uid=?????; pass=??????????????????;"
+rss="http://baibako.tv/rss2.php?feed=dl"
+cd /watch_dir/
+
+wget -qO - --header "$HEADER" "$rss" | grep -ioe "http.*torrent" | \
+while read link;
+do
+  link="${link/&amp;/&}"
+  name="${link#*&name=}"
+  if [ ! -e $name ]
+    then
+        wget -q --header "$HEADER" $link -O "$name"
+        cp "$name" "/watch_dir/$name"
+  fi
+done
