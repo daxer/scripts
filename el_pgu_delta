@@ -1,0 +1,34 @@
+#!/bin/bash
+## Run ./el_pgu_delta D1 D2 D3
+## D? - how much you want monthly add to the counter  
+
+login="???%40mail.com"
+password="???"
+account="?????-???-??"
+counter="???"
+
+#################################
+
+pgu_link="https://pgu.mos.ru/ru/application/mosenergo/counters/"
+cjar=`mktemp /tmp/curl-delta-cookies.XXXX`
+resp=`mktemp /tmp/curl-delta-json.XXXX`
+# get cookies
+curl -c $cjar -s https://login.mos.ru/eaidit/eaiditweb/openouterlogin.do > /dev/null
+# post login data
+if ! curl -c $cjar -b $cjar -s -L -d "username=$login&password=$password" https://login.mos.ru/eaidit/eaiditweb/outerlogin.do | grep -q "Your login was successful"; then
+	echo "Login failed!" >&2
+	exit 1
+fi
+# get counter values
+curl -c $cjar -b $cjar -s -d "getAction=auth&ls=$account&pu=$counter" $pgu_link > $resp
+nm_abn=$(cat $resp | sed -r 's/^.*(nm_abn.*)}}/\1/;s/\"//g;s/,/\&/g;s/:/=/g')
+eval $( cat $resp | sed -r 's/\"//g;s/:/=/g;s/,/\n/g' | grep ^count_t | sed -r 's/^.*_//g;s/t/t[/g;s/=/]=/g' )
+#echo ${t[@]}
+
+for arg in $@
+do
+	(( i++ ))
+	[[ ${t[$i]} != "null" ]] && value="${value}t$i=$(( ${t[$i]} + arg ))&"
+	[[ $i = $# ]] && curl -c $cjar -b $cjar -s -d "$value$nm_abn" $pgu_link?getAction=sendData
+done
+rm $cjar $resp
